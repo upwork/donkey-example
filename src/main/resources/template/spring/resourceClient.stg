@@ -1,0 +1,115 @@
+import "importClass.stg"
+
+resourceClient(resourceDefinition, generator)::= <<
+package <resourceDefinition.serviceDefinition.namespaces.java>;
+
+import <resourceDefinition.serviceDefinition.namespaceImports.java>.*;
+<resourceDefinition.serviceDefinition.classImports.java:importClass(); separator="\n">
+import <resourceDefinition.serviceDefinition.namespaces.java>.exception.*;
+
+import org.springframework.http.RequestEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.annotation.Generated;
+import java.net.URI;
+import java.util.List;
+import java.util.Optional;
+
+<resourceDefinition; format="doc">@Component
+@Generated("<generator>")
+public class <resourceDefinition.name; format="cap">ResourceClient {
+    private final ConnectionSettings connectionSettings;
+
+    public <resourceDefinition.name; format="cap">ResourceClient(ConnectionSettings connectionSettings) {
+        this.connectionSettings = connectionSettings;
+    }
+
+    <resourceDefinition.methodDefinitions:endpointCallMethod(); separator="\n\n">
+
+    private Optional\<Integer> getDonkeyErrorCode(HttpStatusCodeException httpException) {
+        List\<String> errorHeaderList = httpException.getResponseHeaders().get("vnd.error");
+        if (errorHeaderList == null || errorHeaderList.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Integer.valueOf(errorHeaderList.get(0)));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+}
+>>
+
+endpointCallMethod(methodDefinition)::= <<
+<methodDefinition; format="clientDoc">public <if(methodDefinition.returnType)><methodDefinition.returnType><else>void<endif> <methodDefinition.name>(<methodDefinition.argumentDefinitions:argument(); separator=", ">)<if(methodDefinition.throwableExceptions)> throws <methodDefinition.throwableExceptions; separator=", "><endif> {
+    UriComponentsBuilder uriBuilder = UriComponentsBuilder.newInstance()
+            .scheme(connectionSettings.getScheme())
+            .host(connectionSettings.getHost())
+            .port(connectionSettings.getPort())
+            <if(methodDefinition.resourceDefinition.basePath)>.path("<methodDefinition.resourceDefinition.basePath>")<endif>
+            <if(methodDefinition.path)>.path("<methodDefinition.path>")<endif>
+            ;
+    <methodDefinition.argumentDefinitions:addQueryParam()>
+    URI uri = uriBuilder.build()
+            <if(methodDefinition.withPathParams)><substitutePathParams(methodDefinition)><endif>
+            .encode()
+            .toUri();
+    RequestEntity\<<if(methodDefinition.withBodyParam)><methodDefinition.argumentDefinitions:bodyType()><else>Void<endif>\> requestEntity = RequestEntity.<methodDefinition.httpMethod;format="lower">(uri)
+            <if(methodDefinition.withBodyParam)><methodDefinition.argumentDefinitions:addRequestBody()><else>.build()<endif>;
+    RestTemplate restTemplate = connectionSettings.getRestTemplate();
+    <if(methodDefinition.throwableExceptions)>try {<\n><\ ><\ ><\ ><\ ><\\>
+    <else><endif>
+    <if(methodDefinition.returnType)>return restTemplate.exchange(requestEntity, <methodDefinition.returnType>.class).getBody()<else>restTemplate.exchange(requestEntity, Void.class)<endif>;
+    <if(methodDefinition.throwableExceptions)>} catch (HttpStatusCodeException httpException) {
+    Optional\<Integer> errorCode = getDonkeyErrorCode(httpException);
+    if (!errorCode.isPresent()) {
+        throw httpException;
+    }
+    <methodDefinition.throwableExceptions:throwExceptionAfterCheck();separator="\n">
+    throw httpException;<\n><\\>
+    }
+    <endif>
+}
+>>
+
+argument(argumentDefinition)::= <<
+<if(argumentDefinition.queryParam)>Optional\<<endif><argumentDefinition.type><if(argumentDefinition.queryParam)>\><endif> <argumentDefinition.name>
+>>
+
+substitutePathParams(methodDefinition)::= <<
+.expand(new java.util.HashMap\<String, String>() {{
+    <methodDefinition.pathParams:putPathParam()>
+}})
+>>
+
+putPathParam(argumentDefinition)::= <%
+put("<argumentDefinition.name>", <argumentDefinition.name>.toString());
+%>
+
+addQueryParam(argumentDefinition)::= <<
+<if (argumentDefinition.queryParam)>
+
+if (<argumentDefinition.name>.isPresent()) {
+    uriBuilder.queryParam("<argumentDefinition.name>", <argumentDefinition.name>.get()<if(argumentDefinition.type.collectionType)>.toArray()<endif>);
+}
+<endif>
+>>
+
+bodyType(argumentDefinition)::= <%
+<if(argumentDefinition.requestBody)><argumentDefinition.type><endif>
+%>
+
+addRequestBody(argumentDefinition)::= <<
+<if(argumentDefinition.requestBody)>.body(<argumentDefinition.name>)<endif>
+>>
+
+throwExceptionAfterCheck(exceptionName)::= <<
+if (errorCode.get().equals(<exceptionName>.ERROR_CODE) &&
+        <exceptionName>.STATUS_CODE == httpException.getRawStatusCode()) {
+    throw new <exceptionName>();
+}
+>>

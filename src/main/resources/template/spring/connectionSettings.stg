@@ -1,0 +1,38 @@
+connectionSettings(serviceDefinition, generator)::= <<
+package <serviceDefinition.namespaces.java>;
+
+import org.springframework.web.client.RestTemplate;
+
+import javax.annotation.Generated;
+
+@Generated("<generator>")
+public class ConnectionSettings {
+    private final String scheme;
+    private final String host;
+    private final int port;
+    private final RestTemplate restTemplate;
+
+    public ConnectionSettings(String scheme, String host, int port, RestTemplate restTemplate) {
+        this.scheme = scheme;
+        this.host = host;
+        this.port = port;
+        this.restTemplate = restTemplate;
+    }
+
+    public String getScheme() {
+        return scheme;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
+    }
+}
+>>

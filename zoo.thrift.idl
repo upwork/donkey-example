@@ -1,0 +1,23 @@
+namespace java com.example.services.zoo.thrift
+namespace php Services.Zoo.Thrift
+
+struct Animal {
+    1: string name;
+    2: string type;
+    3: bool vaccinated;
+}
+
+struct Person {
+    1: string firstName;
+    2: string lastName;
+    3: string governmentId;
+    4: i32 yearsOfExperience;
+}
+
+struct PersonList {
+    1:  list<Person> persons;
+}
+
+struct AnimalList {
+    1: list<Animal> animals;
+}

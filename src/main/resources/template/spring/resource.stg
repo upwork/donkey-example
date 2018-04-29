@@ -1,0 +1,55 @@
+import "importClass.stg"
+
+resource(resourceDefinition, generator)::= <<
+package <resourceDefinition.serviceDefinition.namespaces.java>;
+
+import <resourceDefinition.serviceDefinition.namespaceImports.java>.*;
+<resourceDefinition.serviceDefinition.classImports.java:importClass(); separator="\n">
+import <resourceDefinition.serviceDefinition.namespaces.java>.exception.*;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Generated;
+import java.util.Optional;
+
+<resourceDefinition; format="doc">@RestController
+<if(resourceDefinition.basePath)>@RequestMapping("<resourceDefinition.basePath>")<endif>
+@Generated("<generator>")
+public class <resourceDefinition.name>Resource {
+    private final <resourceDefinition.name>Service service;
+
+    public <resourceDefinition.name>Resource(<resourceDefinition.name>Service service) {
+        this.service = service;
+    }
+
+    <resourceDefinition.methodDefinitions:endpoint(); separator="\n\n">
+
+    @ExceptionHandler(<resourceDefinition.serviceDefinition.name;format="cap">Exception.class)
+    private ResponseEntity\<Void> handleDonkeyException(<resourceDefinition.serviceDefinition.name;format="cap">Exception e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .header("vnd.error", String.valueOf(e.getErrorCode()))
+                .build();
+    }
+}
+>>
+
+endpoint(methodDefinition)::= <<
+<methodDefinition; format="serviceDoc">@RequestMapping(method = RequestMethod.<methodDefinition.httpMethod;format="upper"><if(methodDefinition.path)>, path = "<methodDefinition.path>"<endif>)
+public <if(methodDefinition.returnType)><methodDefinition.returnType><else>void<endif> <methodDefinition.name>(<methodDefinition.argumentDefinitions:endpointArgument(); separator=", ">)<if(methodDefinition.throwableExceptions)> throws <methodDefinition.throwableExceptions; separator=", "><endif> {
+    <if(methodDefinition.returnType)>return <\\>
+    <endif>
+    service.<methodDefinition.name>(<methodDefinition.argumentDefinitions:argumentName(); separator=", ">);
+}
+>>
+
+endpointArgument(argumentDefinition)::= <%
+<if(argumentDefinition.requestBody)>@RequestBody<endif>
+<if(argumentDefinition.pathParam)>@PathVariable("<argumentDefinition.name>")<endif>
+<if(argumentDefinition.queryParam)>@RequestParam(name = "<argumentDefinition.name>"<if(argumentDefinition.defaultValue)>, defaultValue = "<argumentDefinition.defaultValue>"<endif>)<endif>
+<\ ><if(argumentDefinition.queryParam)>Optional\<<endif><argumentDefinition.type><if(argumentDefinition.queryParam)>><endif> <argumentDefinition.name>
+%>
+
+argumentName(argumentDefinition)::= <%
+<argumentDefinition.name>
+%>

@@ -1,0 +1,15 @@
+clientException(exceptionDefinition, generator)::= <<
+package <exceptionDefinition.serviceDefinition.namespaces.java>.exception;
+
+import javax.annotation.Generated;
+
+@Generated("<generator>")
+public class <exceptionDefinition.className> extends <exceptionDefinition.serviceDefinition.name;format="cap">Exception {
+    public static final int STATUS_CODE = <exceptionDefinition.statusCode>;
+    public static final int ERROR_CODE = <exceptionDefinition.errorCode>;
+
+    public <exceptionDefinition.className>() {
+        super(STATUS_CODE, ERROR_CODE, null, null);
+    }
+}
+>>

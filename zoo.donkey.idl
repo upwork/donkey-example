@@ -1,0 +1,36 @@
+serviceName zoo
+
+namespace java com.example.services.zoo
+namespace php Services.Zoo
+
+import namespace java com.example.services.zoo.thrift
+import namespace php Services.Zoo.Thrift
+
+exception InvalidAnimalTypeException 1
+exception AlreadyVaccinatedException 2
+
+resource Animals "/animals" {
+
+    ## Retrieves all animals in the zoo;
+    GET AnimalList getAll();
+
+    POST "/{type}" void addAnimal(pathParam string type, requestBody Animal animal);
+
+    GET "/{type}" AnimalList findAnimalsByType(pathParam string type) throws InvalidAnimalTypeException;
+
+    ## Marks all animals as vaccinated
+    POST "/{type}/vaccinate" void markAsVaccinated(pathParam string type, queryParam list<string> names) throws AlreadyVaccinatedException;
+}
+
+resource Staff "/staff" {
+
+    POST "/janitors" void hireJanitor(requestBody Person janitor);
+
+    POST "/guards" void hireGuard(requestBody Person guard);
+
+    ## Find employees by their first name or last name
+    GET PersonList getAllEmployees(queryParam string firstName, queryParam string lastName);
+
+    ## Fire an employee by their ID number
+    DELETE "/{id}" void terminateEmployee(pathParam string id);
+}

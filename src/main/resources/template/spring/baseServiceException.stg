@@ -1,0 +1,25 @@
+baseServiceException(serviceDefinition, generator)::= <<
+package <serviceDefinition.namespaces.java>.exception;
+
+import javax.annotation.Generated;
+
+@Generated("<generator>")
+public abstract class <serviceDefinition.name;format="cap">Exception extends Exception {
+    private final int statusCode;
+    private final int errorCode;
+
+    public <serviceDefinition.name;format="cap">Exception(int statusCode, int errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.statusCode = statusCode;
+        this.errorCode = errorCode;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+}
+>>

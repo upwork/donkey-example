@@ -1,0 +1,25 @@
+import "importClass.stg"
+
+service(resourceDefinition, generator)::= <<
+package <resourceDefinition.serviceDefinition.namespaces.java>;
+
+import <resourceDefinition.serviceDefinition.namespaceImports.java>.*;
+<resourceDefinition.serviceDefinition.classImports.java:importClass(); separator="\n">
+import <resourceDefinition.serviceDefinition.namespaces.java>.exception.*;
+
+import java.util.Optional;
+import javax.annotation.Generated;
+
+@Generated("<generator>")
+public interface <resourceDefinition.name>Service {
+    <resourceDefinition.methodDefinitions:methodDeclaration(); separator="\n\n">
+}
+>>
+
+methodDeclaration(methodDefinition)::= <<
+<if(methodDefinition.returnType)><methodDefinition.returnType><else>void<endif> <methodDefinition.name>(<methodDefinition.argumentDefinitions:methodArgument(); separator=", ">)<if(methodDefinition.throwableExceptions)> throws <methodDefinition.throwableExceptions; separator=", "><endif>;
+>>
+
+methodArgument(argumentDefinition)::= <%
+<if(argumentDefinition.queryParam)>Optional\<<endif><argumentDefinition.type><if(argumentDefinition.queryParam)>><endif> <argumentDefinition.name>
+%>
